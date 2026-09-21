@@ -48,10 +48,10 @@ That's the whole product.
 ```
 20 seconds inside HUSH.
 
-→ deposit USDG, mint hUSD
+→ mint hUSD against USDG
 → cloak it, balance goes unreadable
-→ send cloaked, or leave a Drop (a pay link, no address)
-→ Blind Desk: long/short stocks, fully cloaked
+→ send cloaked, or leave a Drop link
+→ Blind Desk: stocks, fully cloaked
 → every fee buys $HUSH and erases it
 
 One screen. Live now.
@@ -60,26 +60,23 @@ hushmoneyrh.xyz
 
 **4 · features** (`hush-features.png`)
 ```
-What's live in the HUSH console today:
+Live in the HUSH console today:
 
 Drop · cloaked pay links
 Mirror · read-only view keys
 Blind Desk · cloaked stock positions
 Bonds −20% · Cryo −30% + 80% APY
-The Window · fixed-pool staking with an end date
+The Window · staking with an end date
 Erase · fees buy $HUSH and delete it
-Relays · 20% of fees, forever
 ```
 
 **5 · how it works** (`hush-howitworks.png`)
 ```
 Three moves. No names.
 
-01 Mint: USDG in. Most is hard collateral, the rest buys $HUSH and erases it.
+01 Mint: USDG in. Most is collateral, the rest buys $HUSH and erases it.
 02 Cloak: your hUSD becomes a note only you can read.
 03 Send: amount and both parties never reach the ledger.
-
-Real USDG deposits, verified on Robinhood Chain.
 ```
 
 ## Wave 2 · 4 more tweets
@@ -87,38 +84,36 @@ Real USDG deposits, verified on Robinhood Chain.
 **6 · vs ZEC and UST/LUNA** (`hush-vs.png`)
 ```
 ZEC is private, but it isn't a dollar.
-UST was a dollar, but it was public, 0% hard-backed, and paid 20% forever until it didn't.
+UST was a dollar, but public and 0% hard-backed.
 
 hUSD:
-· holds $1 with ~90% USDG collateral
-· transfers show no amount, no sender, no recipient
-· minting never prints $HUSH, it buys and erases it
-· yield comes from a fixed pool with an end date
+· $1, ~90% USDG collateral
+· no amount, sender or recipient shown
+· minting erases $HUSH, never prints it
 
-Private like ZEC. A dollar like UST wanted to be.
+Private like ZEC. Stable like UST wasn't.
 ```
 
 **7 · Erase** (`hush-erase.png`)
 ```
-The $HUSH flywheel in one line:
+The $HUSH flywheel:
 
-private dollars move → fees collect in USDG → protocol buys $HUSH at market → $HUSH is erased.
+private dollars move → fees collect in USDG → protocol buys $HUSH → $HUSH is erased.
 
-Every cloak, send, uncloak and redeem feeds it.
-So does a slice of every mint.
+Every cloak, send and redeem feeds it. So does a slice of every mint.
 
-Nothing printed. Public receipts. The payer is never shown.
+Nothing printed. Public receipts.
 ```
 
 **8 · Drop** (`hush-drop.png`)
 ```
-You can send private dollars as a link.
+Send private dollars as a link.
 
 Lock cloaked hUSD behind a secret → share the link → whoever opens it claims into their own cloaked balance.
 
-No address. No recipient on the ledger. One claim per Drop.
+No address. No recipient on the ledger.
 
-Text it. DM it. Print it as a QR.
+Text it. DM it. QR it.
 hushmoneyrh.xyz
 ```
 
