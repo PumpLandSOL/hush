@@ -19,6 +19,10 @@ const SIZES = {
   'hush-howitworks': [2400, 1350],
   'hush-features': [2400, 1350],
   'hush-ledger': [2400, 1350],
+  'hush-vs': [2400, 1350],
+  'hush-erase': [2400, 1350],
+  'hush-drop': [2400, 1350],
+  'hush-blinddesk': [2400, 1350],
   'hongfun-keyart': [2400, 1350],
   'wage-howitworks': [2400, 1350],
 };

@@ -81,3 +81,52 @@ Three moves. No names.
 
 Real USDG deposits, verified on Robinhood Chain.
 ```
+
+## Wave 2 · 4 more tweets
+
+**6 · vs ZEC and UST/LUNA** (`hush-vs.png`)
+```
+ZEC is private, but it isn't a dollar.
+UST was a dollar, but it was public, 0% hard-backed, and paid 20% forever until it didn't.
+
+hUSD:
+· holds $1 with ~90% USDG collateral
+· transfers show no amount, no sender, no recipient
+· minting never prints $HUSH, it buys and erases it
+· yield comes from a fixed pool with an end date
+
+Private like ZEC. A dollar like UST wanted to be.
+```
+
+**7 · Erase** (`hush-erase.png`)
+```
+The $HUSH flywheel in one line:
+
+private dollars move → fees collect in USDG → protocol buys $HUSH at market → $HUSH is erased.
+
+Every cloak, send, uncloak and redeem feeds it.
+So does a slice of every mint.
+
+Nothing printed. Public receipts. The payer is never shown.
+```
+
+**8 · Drop** (`hush-drop.png`)
+```
+You can send private dollars as a link.
+
+Lock cloaked hUSD behind a secret → share the link → whoever opens it claims into their own cloaked balance.
+
+No address. No recipient on the ledger. One claim per Drop.
+
+Text it. DM it. Print it as a QR.
+hushmoneyrh.xyz
+```
+
+**9 · Blind Desk** (`hush-blinddesk.png`)
+```
+Your stock positions are nobody's business.
+
+Blind Desk: long or short HOOD, TSLA, NVDA, SPY, BTC and more at 1x, priced off the live tape, settled in cloaked hUSD.
+
+Ticker, size, side, P&L: none of it reaches the ledger.
+```
