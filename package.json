@@ -1,7 +1,7 @@
 {
   "name": "hush",
   "version": "1.0.0",
-  "description": "HUSH (hUSD/$HUSH) — private dollars on Robinhood Chain. Cash only. No questions.",
+  "description": "HUSH (hUSD/$HUSH) — private dollars on Robinhood Chain. Money that does not echo.",
   "main": "server/index.js",
   "scripts": { "start": "node server/index.js" },
   "engines": { "node": ">=18" },

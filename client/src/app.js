@@ -34,7 +34,7 @@ $('connect').onclick = async () => {
   await connectPhantom();
 };
 $('wmodal').onclick = (e) => { if (e.target.id === 'wmodal') $('wmodal').classList.remove('on'); };
-$('wsave').onclick = async () => { const v = $('waddr').value.trim(); if (!/^0x[a-fA-F0-9]{40}$/.test(v)) return toast('invalid address', true); wallet = v.toLowerCase(); localStorage.setItem('hush_w', v); setConnected(); $('wmodal').classList.remove('on'); toast('check opened'); await loadAccount(); };
+$('wsave').onclick = async () => { const v = $('waddr').value.trim(); if (!/^0x[a-fA-F0-9]{40}$/.test(v)) return toast('invalid address', true); wallet = v.toLowerCase(); localStorage.setItem('hush_w', v); setConnected(); $('wmodal').classList.remove('on'); toast('vault opened'); await loadAccount(); };
 function needWallet() { if (!wallet) { connectPhantom(); return true; } return false; }
 $('cta-demo').onclick = () => $('demo').scrollIntoView({ behavior: 'smooth' });
 
@@ -54,7 +54,7 @@ function renderMetrics() {
     $('dk-open').textContent = fmt(D.open, 0); $('dk-vol').textContent = '$' + big(D.volume); $('dk-fees').textContent = '$' + fmt(D.fees, 2);
   }
   if (M.bonds) { const Bd = M.bonds;
-    $('bd-price').textContent = '$' + fmt(Bd.price, 6); $('bd-market').textContent = '$' + fmt(Bd.market, 6); $('bd-left').textContent = '$' + fmt(Bd.leftToday, 0) + ' / $' + fmt(Bd.capUsd, 0); $('bd-sold').textContent = '$' + fmt(Bd.soldUsd, 0) + ' · ' + big(Bd.soldHush) + ' HUSH'; if (Bd.freezer) { $('fg-price').textContent = '$' + fmt(Bd.freezer.price, 6) + ' (−' + fmt(Bd.freezer.discount * 100, 0) + '%)'; $('fg-locked').textContent = big(Bd.freezer.lockedHush) + ' HUSH · ' + Bd.freezer.n + ' on ice'; }
+    $('bd-price').textContent = '$' + fmt(Bd.price, 6); $('bd-market').textContent = '$' + fmt(Bd.market, 6); $('bd-left').textContent = '$' + fmt(Bd.leftToday, 0) + ' / $' + fmt(Bd.capUsd, 0); $('bd-sold').textContent = '$' + fmt(Bd.soldUsd, 0) + ' · ' + big(Bd.soldHush) + ' HUSH'; if (Bd.freezer) { $('fg-price').textContent = '$' + fmt(Bd.freezer.price, 6) + ' (−' + fmt(Bd.freezer.discount * 100, 0) + '%)'; $('fg-locked').textContent = big(Bd.freezer.lockedHush) + ' HUSH · ' + Bd.freezer.n + ' in cryo'; }
   }
   if (M.happy) { const V = M.happy;
     $('v-apy').textContent = fmt(V.apy * 100, 0) + '%'; $('v-boost').textContent = V.boost && V.boost.live ? '⚡ boosted from ' + fmt(V.baseApy * 100, 0) + '% · ' + dur(V.boost.endsIn) + ' left' : ''; $('v-staked').textContent = big(V.staked) + ' / ' + big(V.cap);
@@ -62,19 +62,19 @@ function renderMetrics() {
   }
   
   if (M.punch) { const Fm = M.punch;
-    $('punchboard').innerHTML = Fm.board.map((b, i) => `<div class="r"><span class="ty">#${i + 1}</span><span class="sg">${b.who}</span><span class="am">${b.guests} referred · ${fmt(b.earned, 2)} hUSD</span></div>`).join('') || '<div class="r"><span class="sg">no regulars yet. pass the first envelope</span></div>';
+    $('punchboard').innerHTML = Fm.board.map((b, i) => `<div class="r"><span class="ty">#${i + 1}</span><span class="sg">${b.who}</span><span class="am">${b.guests} referred · ${fmt(b.earned, 2)} hUSD</span></div>`).join('') || '<div class="r"><span class="sg">no relays yet. send the first drop</span></div>';
   }
   if (M.shred) { const P = M.shred;
     $('p-hush').textContent = big(P.burnedHush) + ' HUSH'; $('p-usd').textContent = '$' + big(P.burnedUsd);
     $('p-svc').textContent = '$' + fmt(P.svcUsd, 2) + ' / $' + P.minUsd; $('p-ep').textContent = fmt(P.epochs, 0);
-    $('shredfeed').innerHTML = P.burns.map((b) => `<div class="r"><span class="ty burn">shred</span><span class="sg">epoch ${b.epoch} · ${b.id} · @ $${fmt(b.px, 6)}</span><span class="am">✂ ${fmt(b.hush, 1)} HUSH</span></div>`).join('') || '<div class="r"><span class="sg">the shredder is waiting on its first service charge…</span></div>';
+    $('shredfeed').innerHTML = P.burns.map((b) => `<div class="r"><span class="ty burn">erase</span><span class="sg">epoch ${b.epoch} · ${b.id} · @ $${fmt(b.px, 6)}</span><span class="am">− ${fmt(b.hush, 1)} HUSH</span></div>`).join('') || '<div class="r"><span class="sg">waiting on the first fees to erase…</span></div>';
   }
   $('feed').innerHTML = (M.feed.length ? M.feed : []).map((t) => {
     const right = t.type === 'private' ? '<span class="redact">█████</span>'
       : t.publicAmount != null ? fmt(t.publicAmount, 0) + ' hUSD' : '<span class="redact">████</span>';
     const ty = t.type === 'private' ? 'private' : t.type;
     return `<div class="r"><span class="ty ${t.type}">${ty}</span><span class="sg">${t.sig}</span><span class="am">${right}</span></div>`;
-  }).join('') || '<div class="r"><span class="sg">nothing rung up yet</span></div>';
+  }).join('') || '<div class="r"><span class="sg">no signal yet</span></div>';
 }
 
 // ---------- account ----------
@@ -103,48 +103,48 @@ function renderPanel() {
   const p = $('panel'); const cr = M ? M.cr : 0.9, vp = M ? M.hushPrice : 0.85;
   if (tab === 'seal') {
     const url = location.origin + '/view#' + carbonKey;
-    p.innerHTML = `<div class="note"><b>The Carbon Copy.</b> This view key opens a read-only duplicate of your shielded balance and history. It <b>cannot spend</b>. Give it only to who you want to see.</div>
+    p.innerHTML = `<div class="note"><b>Mirror.</b> This view key opens a read-only mirror of your shielded balance and history. It <b>cannot spend</b>. Give it only to who you want to see.</div>
       <div class="linkbox"><code id="vk">${url}</code><button id="cp">Copy</button></div>
-      <div class="kv" style="margin-top:12px"><span>opens</span><b><a href="${url}" target="_blank" style="color:var(--gold)">carbon copy ↗</a></b></div>`;
+      <div class="kv" style="margin-top:12px"><span>opens</span><b><a href="${url}" target="_blank" style="color:var(--gold)">mirror ↗</a></b></div>`;
     $('cp').onclick = () => { navigator.clipboard.writeText(url); toast('view key copied'); };
   } else if (tab === 'claim') {
-    p.innerHTML = `<div class="note"><b>Someone passed you an envelope.</b> Private hUSD is tucked behind this link. Claim it into your shielded balance.</div>
+    p.innerHTML = `<div class="note"><b>You have a drop waiting.</b> Cloaked hUSD is locked behind this link. Claim it into your shielded balance.</div>
       <div class="kv"><span>amount</span><b id="cl-amt">…</b></div><div class="kv"><span>memo</span><b id="cl-memo">—</b></div>
-      <button class="btn wide" id="act" style="margin-top:14px">Claim into my shielded balance</button>`;
+      <button class="btn wide" id="act" style="margin-top:14px">Claim into my cloaked balance</button>`;
     api('/api/note/peek', { secret: claimSecret }).then((r) => { if (r.error) { $('cl-amt').textContent = r.error; $('act').disabled = true; return; } $('cl-amt').textContent = r.claimed ? 'already claimed' : fmt(r.amt, 2) + ' hUSD'; $('cl-memo').textContent = r.memo || '—'; if (r.claimed) $('act').disabled = true; });
-    $('act').onclick = () => doAct('/api/note/claim', { secret: claimSecret, amount: 1 }, (r) => { history.replaceState(null, '', location.pathname); tab = 'send'; renderPanel(); return `claimed ${fmt(r.claimed, 2)} hUSD, quietly`; });
+    $('act').onclick = () => doAct('/api/note/claim', { secret: claimSecret, amount: 1 }, (r) => { history.replaceState(null, '', location.pathname); tab = 'send'; renderPanel(); return `claimed ${fmt(r.claimed, 2)} hUSD, cloaked`; });
   } else if (tab === 'dark') {
     const D = M && M.dark, pos = (A && A.dark) || [];
-    p.innerHTML = `<div class="note"><b>The Back Room.</b> Put shielded hUSD on a stock. Long or short, 1x, live tape. Ticker, size and P&amp;L stay off the books. 30 bps each way to the Shredder.</div>
-      <div style="display:flex;gap:10px"><div class="field" style="flex:1"><select id="sym" style="flex:1;background:none;border:none;color:var(--ink);font-family:'Courier Prime';font-size:15px;outline:none">${(D ? D.markets : []).map((m) => `<option value="${m.sym}" ${m.fresh ? '' : 'disabled'}>${m.sym} ${m.px ? '· $' + fmt(m.px, 2) : ''}${m.fresh ? '' : ' · closed'}</option>`).join('')}</select></div>
-      <div class="field" style="flex:0 0 150px"><select id="side" style="flex:1;background:none;border:none;color:var(--ink);font-family:'Courier Prime';font-size:15px;outline:none"><option value="long">LONG</option><option value="short">SHORT</option></select></div></div>
+    p.innerHTML = `<div class="note"><b>Blind Desk.</b> Commit cloaked hUSD to a stock. Long or short, 1x, live tape. Ticker, size and P&amp;L stay cloaked. 30 bps each way to Erase.</div>
+      <div style="display:flex;gap:10px"><div class="field" style="flex:1"><select id="sym" style="flex:1;background:none;border:none;color:var(--ink);font-family:'Sora';font-size:15px;outline:none">${(D ? D.markets : []).map((m) => `<option value="${m.sym}" ${m.fresh ? '' : 'disabled'}>${m.sym} ${m.px ? '· $' + fmt(m.px, 2) : ''}${m.fresh ? '' : ' · closed'}</option>`).join('')}</select></div>
+      <div class="field" style="flex:0 0 150px"><select id="side" style="flex:1;background:none;border:none;color:var(--ink);font-family:'Sora';font-size:15px;outline:none"><option value="long">LONG</option><option value="short">SHORT</option></select></div></div>
       <div class="field"><input id="in" type="number" placeholder="10.00 minimum" min="10"><span class="u">hUSD</span><span class="mx" id="mx">MAX</span></div>
-      <div class="kv"><span>Shielded balance</span><b>${A ? (reveal ? fmt(A.priv, 2) : '████') : '—'}</b></div><div class="kv"><span>Per position · pool</span><b>${D ? 'max ' + fmt(D.maxPos, 0) + ' · ' + (D.full ? 'full' : 'open') : '—'}</b></div>
-      <button class="btn fill wide" id="act" style="margin-top:14px">Open quietly</button>
-      ${pos.length ? '<div style="margin-top:16px">' + pos.map((q) => `<div class="pos"><b>${q.sym}</b><span>${q.side}</span><span class="sg" style="font-family:'Courier Prime';font-size:12px;color:var(--mut)">${fmt(q.notional, 2)} @ ${fmt(q.entry, 2)} → ${fmt(q.px, 2)}</span><span class="pnl ${q.pnl >= 0 ? 'up' : 'dn'}">${q.pnl >= 0 ? '+' : ''}${fmt(q.pnl, 2)}</span><button data-close="${q.id}" ${q.fresh ? '' : 'disabled'}>Close</button></div>`).join('') + '</div>' : ''}`;
+      <div class="kv"><span>Shielded balance</span><b>${A ? (reveal ? fmt(A.priv, 2) : '<span class="redact">0000</span>') : '—'}</b></div><div class="kv"><span>Per position · pool</span><b>${D ? 'max ' + fmt(D.maxPos, 0) + ' · ' + (D.full ? 'full' : 'open') : '—'}</b></div>
+      <button class="btn fill wide" id="act" style="margin-top:14px">Open cloaked</button>
+      ${pos.length ? '<div style="margin-top:16px">' + pos.map((q) => `<div class="pos"><b>${q.sym}</b><span>${q.side}</span><span class="sg" style="font-family:'Sora';font-size:12px;color:var(--mut)">${fmt(q.notional, 2)} @ ${fmt(q.entry, 2)} → ${fmt(q.px, 2)}</span><span class="pnl ${q.pnl >= 0 ? 'up' : 'dn'}">${q.pnl >= 0 ? '+' : ''}${fmt(q.pnl, 2)}</span><button data-close="${q.id}" ${q.fresh ? '' : 'disabled'}>Close</button></div>`).join('') + '</div>' : ''}`;
     $('mx').onclick = () => { if (A) $('in').value = Math.min(A.priv, D ? D.maxPos : 1000); };
-    $('act').onclick = () => doAct('/api/dark/open', { sym: $('sym').value, side: $('side').value, amount: +$('in').value }, (r) => `opened ${r.opened.side} ${r.opened.sym} , off the books`);
+    $('act').onclick = () => doAct('/api/dark/open', { sym: $('sym').value, side: $('side').value, amount: +$('in').value }, (r) => `opened ${r.opened.side} ${r.opened.sym} , cloaked`);
     p.querySelectorAll('[data-close]').forEach((b) => b.onclick = () => doAct('/api/dark/close', { id: b.dataset.close, amount: 1 }, (r) => `closed · ${r.closed.pnl >= 0 ? '+' : ''}${fmt(r.closed.pnl, 2)} hUSD`));
   } else if (tab === 'bond') {
     const Bd = M && M.bonds, me = A && A.bonds;
     const F = Bd && Bd.freezer; if (typeof window.__lock === 'undefined') window.__lock = true; const L = window.__lock;
-    p.innerHTML = `<div class="note"><b>Clip a coupon: USDG for $HUSH at ${Bd ? fmt(Bd.discount * 100, 0) : 20}% below market.</b> Vests over ${Bd ? Bd.vestDays : 5} days. Your USDG goes to the reserve and mints nothing. ${Bd && !Bd.open ? '<b>Coupons are closed.</b>' : ''}</div>
-      <div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn ${L ? 'fill' : 'ghost'}" id="lk1" style="flex:1.3">❄ THE FREEZER · lock ${F ? F.lockDays * 24 : 48}h · −${F ? fmt(F.discount * 100, 0) : 30}% · ${F ? fmt(F.apy * 100, 0) : 80}% APY</button><button class="btn ${L ? 'ghost' : 'fill'}" id="lk0" style="flex:1">Plain coupon · −${Bd ? fmt(Bd.discount * 100, 0) : 20}% · ${Bd ? Bd.vestDays : 5}d vest</button></div>
-      ${L ? `<div class="note" style="border-color:var(--gold)"><b>The Freezer:</b> your USDG enters the coupon pool, you take $HUSH at <b>${F ? fmt(F.discount * 100, 0) : 30}% below market</b>, locked <b>${F ? F.lockDays * 24 : 48} hours</b>. While locked it earns <b>${F ? fmt(F.apy * 100, 0) : 80}% APY in $HUSH</b>, paid from Happy Hour's fixed pool. Nothing printed. Claim principal + yield at unlock.</div>` : ''}
+    p.innerHTML = `<div class="note"><b>Bond USDG for $HUSH at ${Bd ? fmt(Bd.discount * 100, 0) : 20}% below market.</b> Vests over ${Bd ? Bd.vestDays : 5} days. Your USDG goes to the reserve and mints nothing. ${Bd && !Bd.open ? '<b>Bonds are closed.</b>' : ''}</div>
+      <div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn ${L ? 'fill' : 'ghost'}" id="lk1" style="flex:1.3">CRYO · lock ${F ? F.lockDays * 24 : 48}h · −${F ? fmt(F.discount * 100, 0) : 30}% · ${F ? fmt(F.apy * 100, 0) : 80}% APY</button><button class="btn ${L ? 'ghost' : 'fill'}" id="lk0" style="flex:1">Standard bond · −${Bd ? fmt(Bd.discount * 100, 0) : 20}% · ${Bd ? Bd.vestDays : 5}d vest</button></div>
+      ${L ? `<div class="note" style="border-color:var(--gold)"><b>Cryo:</b> your USDG enters the bond pool, you take $HUSH at <b>${F ? fmt(F.discount * 100, 0) : 30}% below market</b>, locked <b>${F ? F.lockDays * 24 : 48} hours</b>. While locked it earns <b>${F ? fmt(F.apy * 100, 0) : 80}% APY in $HUSH</b>, paid from the Window's fixed pool. Nothing printed. Claim principal + yield at unlock.</div>` : ''}
       <div class="field"><input id="in" type="number" placeholder="50.00 minimum" min="50"><span class="u">USDG</span><span class="mx" id="mx">MAX</span></div>
       <div class="kv"><span>USDG on ledger</span><b>${A ? fmt(A.usdg, 2) : '—'}</b></div>
-      <div class="kv"><span>${L ? 'freezer' : 'coupon'} price · market</span><b>${Bd ? '$' + fmt(L && F ? F.price : Bd.price, 6) + ' · $' + fmt(Bd.market, 6) : '—'}</b></div>
+      <div class="kv"><span>${L ? 'cryo' : 'bond'} price · market</span><b>${Bd ? '$' + fmt(L && F ? F.price : Bd.price, 6) + ' · $' + fmt(Bd.market, 6) : '—'}</b></div>
       <div class="kv"><span>you receive</span><b id="o1">—</b></div>
       ${L ? '<div class="kv"><span>yield at unlock</span><b id="o2">—</b></div>' : ''}
       <div class="kv"><span>vesting · claimable now</span><b>${me ? big(me.pending) + ' · ' + big(me.claimable) + ' HUSH' : '—'}</b></div>
-      ${me && me.locked ? `<div class="kv"><span>in the freezer · yield building</span><b style="color:var(--gold2)">${big(me.locked)} · +${big(me.freezing)} HUSH</b></div>` : ''}
-      <div style="display:flex;gap:10px;margin-top:14px"><button class="btn fill" id="act" style="flex:1.4">${L ? '❄ Freeze HUSH' : 'Clip coupon'}</button><button class="btn ghost" id="act2" style="flex:1">Claim vested</button><button class="btn ghost" id="act3" style="flex:1">Withdraw HUSH</button></div>
+      ${me && me.locked ? `<div class="kv"><span>in cryo · yield building</span><b style="color:var(--gold2)">${big(me.locked)} · +${big(me.freezing)} HUSH</b></div>` : ''}
+      <div style="display:flex;gap:10px;margin-top:14px"><button class="btn fill" id="act" style="flex:1.4">${L ? 'Cryo-lock HUSH' : 'Bond USDG'}</button><button class="btn ghost" id="act2" style="flex:1">Claim vested</button><button class="btn ghost" id="act3" style="flex:1">Withdraw HUSH</button></div>
       <div class="note" style="margin-top:12px;margin-bottom:0">No USDG yet? <a href="#" id="go-dep" style="color:var(--gold)">Deposit first →</a></div>`;
     $('mx').onclick = () => { if (A) $('in').value = A.usdg; };
     $('in').oninput = () => { const x = +$('in').value || 0; const px = L && F ? F.price : (Bd && Bd.price); $('o1').textContent = Bd ? big(x / px) + ' HUSH (' + big(x / Bd.market) + ' at market)' : '—'; if (L && F && $('o2')) $('o2').textContent = '+' + big(x / px * F.apy * F.lockDays / 365) + ' HUSH (' + fmt(F.apy * 100, 0) + '% APY × ' + F.lockDays * 24 + 'h)'; };
     $('lk1').onclick = () => { window.__lock = true; renderPanel(); }; $('lk0').onclick = () => { window.__lock = false; renderPanel(); };
-    $('act').onclick = () => doAct('/api/bond', { amount: +$('in').value, lock: L }, (r) => r.lock ? `froze ${fmt(r.bonded, 2)} USDG → ${big(r.hushOut)} HUSH locked ${F.lockDays * 24}h at ${fmt(r.apy * 100, 0)}% APY` : `coupon clipped: ${fmt(r.bonded, 2)} USDG → ${big(r.hushOut)} HUSH vesting`);
-    $('act2').onclick = () => doAct('/api/bond/claim', { amount: 1 }, (r) => `claimed ${big(r.claimedHush)} HUSH${r.frozenHush > 0 ? ' (incl. ' + big(r.frozenHush) + ' freezer yield)' : ''}`);
+    $('act').onclick = () => doAct('/api/bond', { amount: +$('in').value, lock: L }, (r) => r.lock ? `cryo-locked ${fmt(r.bonded, 2)} USDG → ${big(r.hushOut)} HUSH locked ${F.lockDays * 24}h at ${fmt(r.apy * 100, 0)}% APY` : `bonded ${fmt(r.bonded, 2)} USDG → ${big(r.hushOut)} HUSH vesting`);
+    $('act2').onclick = () => doAct('/api/bond/claim', { amount: 1 }, (r) => `claimed ${big(r.claimedHush)} HUSH${r.frozenHush > 0 ? ' (incl. ' + big(r.frozenHush) + ' cryo yield)' : ''}`);
     $('act3').onclick = () => doAct('/api/withdraw', { asset: 'HUSH', amount: A ? A.hush : 0 }, (r) => `queued ${big(r.queued.amt)} HUSH for payout`);
     $('go-dep').onclick = (e) => { e.preventDefault(); tab = 'deposit'; document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x.dataset.tab === 'deposit')); renderPanel(); };
   } else if (tab === 'deposit') {
@@ -160,14 +160,14 @@ function renderPanel() {
     $('act2').onclick = () => doAct('/api/deposit', { tx: ($('tx').value || '').trim(), amount: 1 }, (r) => `credited ${fmt(r.amt, 2)} USDG from the treasury deposit`);
   } else if (tab === 'happy') {
     const V = M && M.happy, me = A && A.happy;
-    p.innerHTML = `<div class="note">Stake public hUSD during <b>Happy Hour</b>: <b>${V ? fmt(V.apy * 100, 0) : '—'}% APY</b> for 30 days, paid in <b>$HUSH</b> from a pre-funded pool. Unstake any time (30 bps service charge). ${V && !V.live ? '<b>Happy Hour is ' + (V.startsIn > 0 ? 'not open yet' : 'over') + '.</b>' : ''}</div>
+    p.innerHTML = `<div class="note">Stake public hUSD in <b>the Window</b>: <b>${V ? fmt(V.apy * 100, 0) : '—'}% APY</b> for 30 days, paid in <b>$HUSH</b> from a pre-funded pool. Unstake any time (30 bps fee). ${V && !V.live ? '<b>The Window is ' + (V.startsIn > 0 ? 'not open yet' : 'over') + '.</b>' : ''}</div>
       <div class="field"><input id="in" type="number" placeholder="0.00" min="0"><span class="u">hUSD</span><span class="mx" id="mx">MAX</span></div>
       <div class="kv"><span>Public hUSD</span><b>${A ? fmt(A.husd, 2) : '—'}</b></div>
-      <div class="kv"><span>On the tab</span><b>${me ? fmt(me.staked, 2) + ' hUSD' : '—'}</b></div>
+      <div class="kv"><span>Staked</span><b>${me ? fmt(me.staked, 2) + ' hUSD' : '—'}</b></div>
       <div class="kv"><span>Earned · claimable</span><b>${me ? fmt(me.accruedHush, 1) + ' HUSH (≈ $' + fmt(me.accruedUsd, 4) + ')' : '—'}</b></div>
       <div style="display:flex;gap:10px;margin-top:14px"><button class="btn" id="act" style="flex:1">Stake</button><button class="btn ghost" id="act2" style="flex:1">Unstake</button><button class="btn ghost" id="act3" style="flex:1">Claim HUSH</button></div>`;
     $('mx').onclick = () => { if (A) $('in').value = A.husd; };
-    $('act').onclick = () => doAct('/api/stake', { amount: +$('in').value }, (r) => `${fmt(r.staked, 2)} hUSD on the tab`);
+    $('act').onclick = () => doAct('/api/stake', { amount: +$('in').value }, (r) => `${fmt(r.staked, 2)} hUSD staked`);
     $('act2').onclick = () => doAct('/api/unstake', { amount: +$('in').value }, (r) => `unstaked ${fmt(r.unstaked, 2)} hUSD`);
     $('act3').onclick = () => doAct('/api/claim', { amount: 1 }, (r) => `claimed ${fmt(r.claimedHush, 1)} HUSH`);
   } else if (tab === 'mint') {
@@ -178,25 +178,25 @@ function renderPanel() {
     $('in').oninput = () => { const m = +$('in').value || 0; $('o1').textContent = fmt(m * cr, 2) + ' USDG'; $('o2').textContent = fmt(m * (1 - cr), 2) + ' USDG ≈ ' + fmt((m * (1 - cr)) / vp, 0) + ' HUSH'; };
     $('act').onclick = () => doAct('/api/mint', { amount: +$('in').value }, (r) => `minted ${fmt(r.minted, 0)} hUSD`);
   } else if (tab === 'shield') {
-    p.innerHTML = `<div class="note">Move public hUSD into the <b>shielded pool</b>. It becomes a note <b>encrypted only to you</b> — your balance reads <span class="redact">████</span> on-chain.</div>
+    p.innerHTML = `<div class="note">Move public hUSD into the <b>shielded pool</b>. It becomes a note <b>encrypted only to you</b> — your balance is unreadable on-chain.</div>
       <div class="field"><input id="in" type="number" placeholder="0.00" min="0"><span class="u">hUSD</span><span class="mx" id="mx">MAX</span></div>
       <div class="kv"><span>Public hUSD available</span><b>${A ? fmt(A.husd, 2) : '—'}</b></div>
       <button class="btn wide" id="act" style="margin-top:14px">Shield hUSD</button>`;
     $('mx').onclick = () => { if (A) $('in').value = A.husd; };
     $('act').onclick = () => doAct('/api/shield', { amount: +$('in').value }, (r) => `shielded ${fmt(r.shielded, 2)} hUSD`);
   } else if (tab === 'send') {
-    p.innerHTML = `<div class="note">Pay with shielded hUSD. The <b>amount and both parties stay off the books</b> — the ledger records only a nullifier + a new commitment.</div>
+    p.innerHTML = `<div class="note">Send cloaked hUSD. The <b>amount and both parties never appear</b> — the ledger records only a nullifier + a new commitment.</div>
       <div class="field"><input id="to" placeholder="recipient Robinhood Chain address…" spellcheck="false"></div>
       <div class="field"><input id="in" type="number" placeholder="0.00" min="0"><span class="u">hUSD</span><span class="mx" id="mx">MAX</span></div>
-      <div class="kv"><span>Your private balance</span><b>${A ? (reveal ? fmt(A.priv, 2) : '████') : '—'}</b></div>
-      <button class="btn wide" id="act" style="margin-top:14px">Pay quietly</button>
-      <div class="note" style="margin:18px 0 8px"><b>Or pass an envelope:</b> no address needed. Tuck the amount above behind a link and send the link to anyone.</div>
+      <div class="kv"><span>Your private balance</span><b>${A ? (reveal ? fmt(A.priv, 2) : '<span class="redact">0000</span>') : '—'}</b></div>
+      <button class="btn wide" id="act" style="margin-top:14px">Send cloaked</button>
+      <div class="note" style="margin:18px 0 8px"><b>Or leave a drop:</b> no address needed. Lock the amount above behind a link and send the link to anyone.</div>
       <div class="field"><input id="memo" placeholder="memo (optional, seen only by the claimer)" maxlength="80"></div>
-      <button class="btn ghost wide" id="act2">Seal an envelope</button>
+      <button class="btn ghost wide" id="act2">Create drop link</button>
       ${lastNote ? '<div class="linkbox"><code>' + lastNote + '</code><button id="cpn">Copy</button></div>' : ''}`;
     $('mx').onclick = () => { if (A) $('in').value = A.priv; };
-    $('act').onclick = () => doAct('/api/send', { to: ($('to').value || '').trim(), amount: +$('in').value }, (r) => `sent ${fmt(r.sent, 2)} hUSD, quietly`);
-    $('act2').onclick = () => doAct('/api/note/create', { amount: +$('in').value, memo: $('memo').value }, (r) => { lastNote = location.origin + '/#claim=' + r.secret; renderPanel(); return `envelope sealed with ${fmt(r.amt, 2)} hUSD. copy the link`; });
+    $('act').onclick = () => doAct('/api/send', { to: ($('to').value || '').trim(), amount: +$('in').value }, (r) => `sent ${fmt(r.sent, 2)} hUSD, cloaked`);
+    $('act2').onclick = () => doAct('/api/note/create', { amount: +$('in').value, memo: $('memo').value }, (r) => { lastNote = location.origin + '/#claim=' + r.secret; renderPanel(); return `drop created with ${fmt(r.amt, 2)} hUSD. copy the link`; });
     if ($('cpn')) $('cpn').onclick = () => { navigator.clipboard.writeText(lastNote); toast('link copied'); };
   } else {
     p.innerHTML = `<div class="note">Burn hUSD to recover your <b>${fmt(cr * 100, 0)}% USDG</b> plus the <b>${fmt((1 - cr) * 100, 0)}% HUSH</b> share. (Unshield private hUSD first to redeem it.)</div>
