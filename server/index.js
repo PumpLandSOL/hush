@@ -44,10 +44,22 @@ const SHRED_MIN_USD = 25;
 if (!db.shred) db.shred = { svcUsd: 0, burnedHush: 0, burnedUsd: 0, epochs: 0, burns: [] };
 const shred = db.shred;
 const PUNCH_CUT = +(process.env.PUNCH_CUT || 0.20);   // share of every service charge that goes to the wallet who brought the payer across
+// ---------- QUIET YIELD: a share of every REAL fee streams to cloaked hUSD holders, pro-rata, paid in hUSD ----------
+// Only fees paid by real wallets are shared. The fee is hUSD that is already collateral-backed, so paying it to holders prints nothing.
+const QUIET_CUT = +(process.env.QUIET_CUT || 0.40);
+if (!db.quiet) db.quiet = { paid: 0, n: 0, day: [] };
+function quietPay(pool) {
+  if (!(pool > 0)) return 0; const hs = Object.values(db.wallets).filter((x) => x.priv > 0.000001); const tot = hs.reduce((a, x) => a + x.priv, 0); if (!(tot > 0)) return 0;
+  for (const x of hs) { const g = pool * x.priv / tot; x.priv += g; x.quietEarned = (x.quietEarned || 0) + g; }
+  db.shielded.totalValue += pool; const now = Date.now(); db.quiet.paid += pool; db.quiet.n++; db.quiet.day.push([now, pool]); while (db.quiet.day.length && now - db.quiet.day[0][0] > 864e5) db.quiet.day.shift();
+  return pool;
+}
+function quietView() { const hs = Object.values(db.wallets).filter((x) => x.priv > 0.000001); const tot = hs.reduce((a, x) => a + x.priv, 0); const now = Date.now(); const d = db.quiet.day.filter((e) => now - e[0] <= 864e5).reduce((a, e) => a + e[1], 0); return { cut: QUIET_CUT, paid: db.quiet.paid, payouts: db.quiet.n, paid24h: d, holders: hs.length, cloaked: tot, apr: tot > 0 ? d * 365 / tot : 0 }; }
 function svc(kind, amt, w) {
   const f = amt * SVC[kind]; let cut = 0;
   if (w && w.ref && db.wallets[w.ref]) { cut = f * PUNCH_CUT; const fm = db.wallets[w.ref]; fm.husd += cut; fm.earned = (fm.earned || 0) + cut; db.punch.paid += cut; }
-  shred.svcUsd += f - cut; return amt - f;
+  const q = w ? quietPay((f - cut) * QUIET_CUT) : 0;
+  shred.svcUsd += f - cut - q; return amt - f;
 }
 if (!db.punch) db.punch = { paid: 0, guests: 0 };
 function bind(w, addr, refAddr) { refAddr = (refAddr || '').toLowerCase(); if (w.ref || !isWallet(refAddr) || refAddr === addr) return false; const fm = W(refAddr); w.ref = refAddr; w.refTs = Date.now(); fm.guests = (fm.guests || 0) + 1; db.punch.guests++; hist(fm, { type: 'guest', amt: 0, to: addr }); return true; }
@@ -181,7 +193,7 @@ const posPnl = (p, px) => p.side === 'long' ? p.notional * (px - p.entry) / p.en
 function closePos(w, p, px, why) {   // settle into the shield
   let pnl = posPnl(p, px); if (pnl < -p.notional * DARK.liq) pnl = -p.notional * DARK.liq;
   const fee = p.notional * DARK.fee; const back = Math.max(0, p.notional + pnl - fee);
-  w.priv += back; shred.svcUsd += fee; db.dark.fees += fee; db.dark.housePnl -= pnl; db.dark.oi = Math.max(0, db.dark.oi - p.notional); db.dark.open = Math.max(0, db.dark.open - 1); db.dark.closed++; if (why === 'liq') db.dark.liqs++;
+  w.priv += back; shred.svcUsd += fee - quietPay(fee * QUIET_CUT); db.dark.fees += fee; db.dark.housePnl -= pnl; db.dark.oi = Math.max(0, db.dark.oi - p.notional); db.dark.open = Math.max(0, db.dark.open - 1); db.dark.closed++; if (why === 'liq') db.dark.liqs++;
   w.dark = (w.dark || []).filter((x) => x.id !== p.id); hist(w, { type: 'dark-close', amt: back, memo: p.sym + ' ' + p.side + ' · ' + (pnl >= 0 ? '+' : '') + pnl.toFixed(2) });
   sh.nullifiers++; const { C, note } = shieldNote(back, shKeys[randomInt(0, shKeys.length)].pub); pushShTx({ sig: base58(randomBytes(32)), type: 'private', nullifier: nullifierOf('d', sh.notes), commitment: C, note, proof: simProof(), ts: Date.now() });
   return { pnl, fee, back };
@@ -250,11 +262,12 @@ function metrics() {
     deposits: { usdg: db.treasuryIn.usdg, n: db.treasuryIn.n }, dark: { markets: Object.keys(DARK_FEED).map((sym) => ({ sym, px: TAPE[sym] ? TAPE[sym].px : null, ts: TAPE[sym] ? TAPE[sym].ts : null, fresh: tapeFresh(sym) })), open: db.dark.open, opened: db.dark.opened, closed: db.dark.closed, volume: db.dark.volume, fees: db.dark.fees, liqs: db.dark.liqs, fee: DARK.fee, maxPos: DARK.maxPos, maxOi: DARK.maxOi, full: db.dark.oi >= DARK.maxOi }, bonds: (() => { const B = bondDay(); return { discount: BOND.discount, vestDays: BOND.vestMs / 864e5, capUsd: BOND.capUsd, leftToday: Math.max(0, BOND.capUsd - B.dayUsd), soldUsd: B.soldUsd, soldHush: B.soldHush, n: B.n, price: bondPrice(), market: db.hushPrice, end: BOND.end, open: Date.now() <= BOND.end, min: BOND.min, freezer: { discount: BOND.lockDiscount, lockDays: BOND.lockMs / 864e5, apy: BOND.lockApy, price: freezerPrice(), lockedHush: db.freezer.lockedHush, usd: db.freezer.usd, n: db.freezer.n, yieldHush: db.freezer.yieldHush } }; })(), punch: { cut: PUNCH_CUT, guests: db.punch.guests, paid: db.punch.paid, board: referrers() }, notes: { created: Object.keys(db.links).length, open: Object.values(db.links).filter((L) => !L.claimed).length, claimed: Object.values(db.links).filter((L) => L.claimed).length }, queue: { open: db.queue.filter((q) => q.status === 'queued').length, openUsd: db.queue.filter((q) => q.status === 'queued').reduce((a, q) => a + q.amt, 0), paid: db.queue.filter((q) => q.status === 'paid').length },
     happy: { ...HAPPY, apy: happyApy(Date.now()), baseApy: HAPPY.apy, boost: { apy: HAPPY_BOOST.apy, end: HAPPY_BOOST.end, live: Date.now() < HAPPY_BOOST.end, endsIn: Math.max(0, HAPPY_BOOST.end - Date.now()) }, live: happyLive(Date.now()), staked: db.happy.staked, stakers: db.happy.stakers, paidHush: db.happy.paidHush, paidUsd: db.happy.paidUsd, poolLeft: Math.max(0, HAPPY.pool - db.happy.paidHush), poolLeftUsd: Math.max(0, HAPPY.pool - db.happy.paidHush) * db.hushPrice, endsIn: Math.max(0, HAPPY.end - Date.now()), startsIn: Math.max(0, HAPPY.start - Date.now()) },
     shred: { svcUsd: shred.svcUsd, burnedHush: shred.burnedHush, burnedUsd: shred.burnedUsd, epochs: shred.epochs, minUsd: SHRED_MIN_USD, bps: { shield: 30, send: 30, unshield: 30, redeem: 50 }, burns: shred.burns.slice(0, 8).map((b) => ({ id: b.id.slice(0, 8) + '…' + b.id.slice(-4), usd: b.usd, hush: b.hush, px: b.px, ts: b.ts, epoch: b.epoch })) },
+    quiet: quietView(),
     shielded: { totalValue: sh.totalValue, notes: sh.notes, nullifiers: sh.nullifiers, txCount: sh.txCount, root: sh.root },
     feed: sh.feed.slice(0, 10).map((t) => ({ sig: t.sig.slice(0, 6) + '…' + t.sig.slice(-4), type: t.type, publicAmount: t.publicAmount || null, ts: t.ts })),
   };
 }
-function account(addr) { const w = W(addr); const now = Date.now(); return { wallet: addr, usdg: w.usdg, hush: w.hush, husd: w.husd, priv: w.priv, deposited: w.deposited || 0, dark: darkView(w), bonds: bondView(w, now), ref: w.ref || null, guests: w.guests || 0, earned: w.earned || 0, happy: happyView(w, now), queue: db.queue.filter((q) => q.wallet === addr.toLowerCase()).slice(0, 10) }; }
+function account(addr) { const w = W(addr); const now = Date.now(); return { wallet: addr, usdg: w.usdg, hush: w.hush, husd: w.husd, priv: w.priv, deposited: w.deposited || 0, quietEarned: w.quietEarned || 0, dark: darkView(w), bonds: bondView(w, now), ref: w.ref || null, guests: w.guests || 0, earned: w.earned || 0, happy: happyView(w, now), queue: db.queue.filter((q) => q.wallet === addr.toLowerCase()).slice(0, 10) }; }
 
 // ---------- http ----------
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
@@ -347,7 +360,7 @@ http.createServer(async (req, res) => {
       const side = d.side === 'short' ? 'short' : 'long'; const x = num(d.amount, w.priv); if (!x) return json(res, 200, { error: 'not enough shielded hUSD' }); if (x < 10) return json(res, 200, { error: 'minimum 10 hUSD' });
       if (x > DARK.maxPos) return json(res, 200, { error: 'max ' + DARK.maxPos + ' hUSD per position' }); if (db.dark.oi + x > DARK.maxOi) return json(res, 200, { error: 'the pool is full for now' });
       const fee = x * DARK.fee; const notional = x - fee; const px = TAPE[sym].px;
-      w.priv -= x; shred.svcUsd += fee; db.dark.fees += fee; db.dark.oi += notional; db.dark.open++; db.dark.opened++; db.dark.volume += notional;
+      w.priv -= x; shred.svcUsd += fee - quietPay(fee * QUIET_CUT); db.dark.fees += fee; db.dark.oi += notional; db.dark.open++; db.dark.opened++; db.dark.volume += notional;
       const p = { id: base58(randomBytes(6)), sym, side, notional, entry: px, ts: Date.now() }; w.dark = w.dark || []; w.dark.push(p); hist(w, { type: 'dark-open', amt: x, memo: sym + ' ' + side });
       sh.nullifiers++; const { C, note } = shieldNote(notional, shKeys[randomInt(0, shKeys.length)].pub); pushShTx({ sig: base58(randomBytes(32)), type: 'private', nullifier: nullifierOf('d', sh.notes), commitment: C, note, proof: simProof(), ts: Date.now() }); save();
       return json(res, 200, { ok: true, opened: p, ...account(d.wallet) });

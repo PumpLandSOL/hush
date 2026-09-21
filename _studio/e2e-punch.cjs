@@ -13,7 +13,7 @@ const f = (n) => Math.round(n * 10000) / 10000;
   const un = await post('/api/unshield', { wallet: S1, amount: 40 }); // service charge 0.12 → F gets 0.024
   const fb = await post('/api/account', { wallet: F }); ok('F earned 20% of S1 service charge', f(fb.earned - e0) === 0.024, 'earned +' + f(fb.earned - e0) + ' (service charge ' + f(un.fee) + ')');
   ok('F hUSD credited', f(fb.husd - fa.husd) === 0.024);
-  const m1 = (await (await fetch(B + '/api/metrics')).json()); ok('shred got the other 80%', f(m1.shred.svcUsd - m0) === 0.096 || m1.shred.epochs > 0, 'delta ' + f(m1.shred.svcUsd - m0));
+  const m1 = (await (await fetch(B + '/api/metrics')).json()); ok('shred got 60% of the remainder (40% streams to Quiet Yield)', Math.abs((m1.shred.svcUsd - m0) - 0.0576) < 1e-6 || m1.shred.epochs > 0, 'delta ' + f(m1.shred.svcUsd - m0));
   const s2 = await post('/api/account', { wallet: S2, ref: F }); ok('S2 bound via ?ref on first touch', s2.ref === F);
   const s2b = await post('/api/account', { wallet: S2, ref: S1 }); ok('referrer set once, never changed', s2b.ref === F);
   const self = await post('/api/account', { wallet: '0x0000000000000000000000000000000000000208', ref: '0x0000000000000000000000000000000000000208' }); ok('cannot refer yourself', self.ref === null);

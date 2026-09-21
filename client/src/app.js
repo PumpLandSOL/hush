@@ -64,6 +64,9 @@ function renderMetrics() {
   if (M.punch) { const Fm = M.punch;
     $('punchboard').innerHTML = Fm.board.map((b, i) => `<div class="r"><span class="ty">#${i + 1}</span><span class="sg">${b.who}</span><span class="am">${b.guests} referred · ${fmt(b.earned, 2)} hUSD</span></div>`).join('') || '<div class="r"><span class="sg">no relays yet. send the first drop</span></div>';
   }
+  if (M.quiet) { const Q = M.quiet;
+    $('q-cut').textContent = fmt(Q.cut * 100, 0) + '%'; $('q-paid').textContent = fmt(Q.paid, 2) + ' hUSD'; $('q-24h').textContent = fmt(Q.paid24h, 2) + ' hUSD'; $('q-apr').textContent = Q.cloaked > 0 && Q.paid24h > 0 ? fmt(Q.apr * 100, 1) + '%' : '—'; $('q-n').textContent = fmt(Q.payouts, 0); $('q-holders').textContent = fmt(Q.holders, 0);
+  }
   if (M.shred) { const P = M.shred;
     $('p-hush').textContent = big(P.burnedHush) + ' HUSH'; $('p-usd').textContent = '$' + big(P.burnedUsd);
     $('p-svc').textContent = '$' + fmt(P.svcUsd, 2) + ' / $' + P.minUsd; $('p-ep').textContent = fmt(P.epochs, 0);
@@ -82,6 +85,7 @@ async function loadAccount() { if (!wallet) { A = null; renderAccount(); return;
 function renderAccount() {
   if (wallet) { $('punchbox').style.display = 'flex'; $('punchlink').textContent = location.origin + '/?ref=' + wallet; } else $('punchbox').style.display = 'none';
   $('f-guests').textContent = A ? fmt(A.guests, 0) : '—'; $('f-earned').textContent = A ? fmt(A.earned, 2) + ' hUSD' : '—';
+  $('q-me').textContent = A ? '+' + fmt(A.quietEarned || 0, 4) + ' hUSD' : '—'; $('q-me2').textContent = A ? '+' + fmt(A.quietEarned || 0, 4) + ' hUSD' : '—';
   $('b-usdg').textContent = A ? fmt(A.usdg, 0) : '—';
   $('b-hush').textContent = A ? fmt(A.hush, 1) : '—';
   $('b-husd').textContent = A ? fmt(A.husd, 2) : '—';
