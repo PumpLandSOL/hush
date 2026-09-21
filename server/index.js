@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 8212;
 const ROOT = path.join(__dirname, '..');
 const DATA_PATH = process.env.DATA_PATH || path.join(ROOT, 'data.json');
 const STABLE = 'hUSD', GOV = 'HUSH';
-const HUSH_MINT = process.env.HUSH_MINT || '';   // $HUSH on Robinhood Chain — CA bar lights + live price when set
+const HUSH_MINT = process.env.HUSH_MINT || '0x9556664b35d0b77d7ec0f2bdfed787b7e4abb48b';   // $HUSH · Robinhood Chain · LIVE
 const TREASURY = (process.env.TREASURY || '0x580Aa9df627A396F32aE649EC427a4Cb430a5eD2');   // HUSH treasury on Robinhood Chain: every USDG deposit is verified against this address
 const TICK_SEC = +(process.env.TICK_SEC || 5);
 const SEED = { usdg: 0, hush: 0, husd: 0, priv: 0 };   // real deposits only — nothing is seeded
