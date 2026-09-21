@@ -16,7 +16,7 @@ const ROOT = path.join(__dirname, '..');
 const DATA_PATH = process.env.DATA_PATH || path.join(ROOT, 'data.json');
 const STABLE = 'hUSD', GOV = 'HUSH';
 const HUSH_MINT = process.env.HUSH_MINT || '';   // $HUSH on Robinhood Chain — CA bar lights + live price when set
-const TREASURY = (process.env.TREASURY || '0x0000000000000000000000000000000000000000');   // set on Render at launch — deposits are verified against it
+const TREASURY = (process.env.TREASURY || '0x580Aa9df627A396F32aE649EC427a4Cb430a5eD2');   // HUSH treasury on Robinhood Chain: every USDG deposit is verified against this address
 const TICK_SEC = +(process.env.TICK_SEC || 5);
 const SEED = { usdg: 0, hush: 0, husd: 0, priv: 0 };   // real deposits only — nothing is seeded
 
@@ -78,7 +78,7 @@ async function rpc(method, params) {
   throw err || new Error('rpc');
 }
 const balOf = (token, dec, who) => rpc('eth_call', [{ to: token, data: '0x70a08231' + who.slice(2).padStart(64, '0') }, 'latest']).then((r) => hexToNum(r, dec));
-async function pollChain() { try { CHAIN.block = Number(BigInt(await rpc('eth_blockNumber', []))); CHAIN.treasuryUsdg = await balOf(USDG.addr, USDG.dec, TREASURY); CHAIN.treasuryHush = await balOf(HUSH_MINT, 18, TREASURY); CHAIN.ok = true; CHAIN.lastRead = Date.now(); } catch (e) { CHAIN.ok = false; } }
+async function pollChain() { try { CHAIN.block = Number(BigInt(await rpc('eth_blockNumber', []))); CHAIN.treasuryUsdg = await balOf(USDG.addr, USDG.dec, TREASURY); CHAIN.treasuryHush = HUSH_MINT ? await balOf(HUSH_MINT, 18, TREASURY) : 0; CHAIN.ok = true; CHAIN.lastRead = Date.now(); } catch (e) { CHAIN.ok = false; } }
 setInterval(pollChain, 30000); pollChain();
 if (!db.txs) db.txs = {};
 if (!db.treasuryIn) db.treasuryIn = { usdg: 0, n: 0 };
